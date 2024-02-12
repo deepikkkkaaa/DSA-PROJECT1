@@ -1,0 +1,174 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
+struct RadixHeap {
+    int capacity; 
+    int size; 
+    int* elements; 
+};
+
+struct RadixHeap* initializeRadixHeap(int capacity) {
+    struct RadixHeap* heap = (struct RadixHeap*)malloc(sizeof(struct RadixHeap));
+    if (heap == NULL) {
+        fprintf(stderr, "Memory allocation error for heap. Exiting.\n");
+        exit(EXIT_FAILURE);
+    }
+    heap->capacity = capacity;
+    heap->size = 0;
+    heap->elements = (int*)malloc(capacity * sizeof(int));
+    if (heap->elements == NULL) {
+        fprintf(stderr, "Memory allocation error for elements. Exiting.\n");
+        free(heap);
+        exit(EXIT_FAILURE);
+    }
+    return heap;
+}
+
+void insert(struct RadixHeap* heap, int value) {
+    if (heap->size >= heap->capacity) {
+        fprintf(stderr, "* Error: Maximum heap size reached. Cannot insert further *\n");
+        return;
+    }
+    heap->elements[heap->size] = value;
+    heap->size++;
+}
+
+int findMinIndex(struct RadixHeap* heap) {
+    if (heap->size == 0)
+        return -1;
+    int minIndex = 0;
+    for (int i = 1; i < heap->size; i++) {
+        if (heap->elements[i] < heap->elements[minIndex]) {
+            minIndex = i;
+        }
+    }
+    return minIndex;
+}
+
+int extractMin(struct RadixHeap* heap) {
+    int minIndex = findMinIndex(heap);
+    if (minIndex != -1) {
+        int minValue = heap->elements[minIndex];
+        heap->elements[minIndex] = heap->elements[heap->size - 1];
+        heap->size--;
+        return minValue;
+    } 
+    else {
+        printf("Heap is empty\n");
+        return INT_MIN; // Indicate empty heap with INT_MIN
+    }
+}
+
+void keyDecrease(struct RadixHeap* heap, int oldValue, int newValue) {
+    for (int i = 0; i < heap->size; i++) {
+        if (heap->elements[i] == oldValue && newValue < heap->elements[i]) {
+            heap->elements[i] = newValue;
+            return;
+        }
+    }
+    printf("Value %d not found in the heap or new value is not smaller.\n", oldValue);
+}
+
+void deleteNode(struct RadixHeap* heap, int value) {
+    int i;
+    for (i = 0; i < heap->size; i++) {
+        if (heap->elements[i] == value) {
+            heap->elements[i] = heap->elements[heap->size - 1];
+            heap->size--;
+            return;
+        }
+    }
+    printf("Value %d not found in the heap.\n", value);
+}
+
+void displayHeap(struct RadixHeap* heap) {
+    printf("Current heap:\n");
+    for (int i = 0; i < heap->size; i++) {
+        printf("Value: %d\n", heap->elements[i]);
+    }
+    printf("\n");
+}
+
+void displayMenu() {
+    printf("\nMenu:\n");
+    printf("1. Insert a value\n");
+    printf("2. Extract minimum value\n");
+    printf("3. Decrease value\n");
+    printf("4. Delete value\n");
+    printf("5. Display heap\n");
+    printf("6. Exit\n");
+    printf("Enter your choice (1-6): ");
+}
+
+int main() {
+    printf("RADIX HEAP\n");
+    int capacity, choice;
+    printf("Enter the capacity of the heap: ");
+    if (scanf("%d", &capacity) != 1 || capacity <= 0) {
+        fprintf(stderr, "Invalid input for capacity. Exiting.\n");
+        exit(EXIT_FAILURE);
+    }
+    struct RadixHeap* radixHeap = initializeRadixHeap(capacity);
+
+    do {
+        displayMenu();
+        if (scanf("%d", &choice) != 1) {
+            fprintf(stderr, "Invalid input. Please enter a number. Exiting.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        switch (choice) {
+            case 1: {
+                int value;
+                printf("Enter value: ");
+                if (scanf("%d", &value) != 1) {
+                    fprintf(stderr, "Invalid input for value. Exiting.\n");
+                    exit(EXIT_FAILURE);
+                }
+                insert(radixHeap, value);
+                break;
+            }
+            case 2: {
+                int minValue = extractMin(radixHeap);
+                if (minValue != INT_MIN) {
+                    printf("Extracted minimum value: %d\n", minValue);
+                }
+                break;
+            }
+            case 3: {
+                int oldValue, newValue;
+                printf("Enter old value and new value: ");
+                if (scanf("%d %d", &oldValue, &newValue) != 2) {
+                    fprintf(stderr, "Invalid input for values. Exiting.\n");
+                    exit(EXIT_FAILURE);
+                }
+                keyDecrease(radixHeap, oldValue, newValue);
+                break;
+            }
+            case 4: {
+                int value;
+                printf("Enter value to delete: ");
+                if (scanf("%d", &value) != 1) {
+                    fprintf(stderr, "Invalid input for value. Exiting.\n");
+                    exit(EXIT_FAILURE);
+                }
+                deleteNode(radixHeap, value);
+                break;
+            }
+            case 5:
+                displayHeap(radixHeap);
+                break;
+            case 6:
+                printf("Exiting program\n");
+                break;
+            default:
+                printf("Invalid choice. Please enter a valid option.\n");
+        }
+    } while (choice != 6);
+
+    free(radixHeap->elements);
+    free(radixHeap);
+
+    return 0;
+}
